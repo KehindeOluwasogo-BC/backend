@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 import dj_database_url
 from dotenv import load_dotenv
 
@@ -11,10 +12,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SendGrid Configuration
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-FROM_EMAIL = os.getenv('FROM_EMAIL')
+FROM_EMAIL = os.getenv('FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL')
 
 # Frontend URL for password reset links
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://psychic-halibut-x496qg74656f9vqx-3000.app.github.dev')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
 
 def get_list_env(var_name, default_values):
@@ -34,10 +35,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-c#t$jz^4zu&v^g029e7-rkv4m@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = get_list_env(
+    "ALLOWED_HOSTS",
+    ["localhost", "127.0.0.1", "0.0.0.0", ".app.github.dev"],
+)
 hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if hostname:
     ALLOWED_HOSTS.append(hostname)
+
+frontend_hostname = urlparse(FRONTEND_URL).hostname if FRONTEND_URL else None
+if frontend_hostname and frontend_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(frontend_hostname)
 
 
 # Application definition
@@ -58,13 +66,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "backend.urls"
@@ -140,8 +148,10 @@ if DEBUG:
         r"^http://127\.0\.0\.1(:\d+)?$",
     ]
 else:
-    frontend_url = os.getenv("FRONTEND_URL")
-    CORS_ALLOWED_ORIGINS = [frontend_url] if frontend_url else []
+    CORS_ALLOWED_ORIGINS = get_list_env(
+        "CORS_ALLOWED_ORIGINS",
+        [FRONTEND_URL] if FRONTEND_URL else ["http://localhost:5173", "http://127.0.0.1:5173"],
+    )
 
 CSRF_TRUSTED_ORIGINS = get_list_env(
     'CSRF_TRUSTED_ORIGINS',

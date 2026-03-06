@@ -17,6 +17,25 @@ from .models import PasswordResetToken, PasswordResetAttempt, UserProfile, Accou
 from .utils import generate_reset_token, send_password_reset_email
 
 
+class AuthRootView(APIView):
+    permission_classes = (AllowAny,)
+
+    def get(self, request):
+        return Response(
+            {
+                'message': 'Authentication API root',
+                'endpoints': {
+                    'token': '/api/auth/token/',
+                    'token_refresh': '/api/auth/token/refresh/',
+                    'register': '/api/auth/register/',
+                    'user': '/api/auth/user/',
+                    'password_reset_request': '/api/auth/password-reset/request/',
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
