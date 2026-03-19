@@ -1,6 +1,6 @@
 # Test Coverage Summary
 
-This repository contains a total of **25 tests** across unit, integration, and BDD layers.
+This repository contains a total of **33 tests** across unit, integration, and BDD layers.
 
 ## ✅ What’s Tested
 
@@ -15,6 +15,14 @@ This repository contains a total of **25 tests** across unit, integration, and B
 - JWT token endpoint (`/api/auth/token/`) returns refresh/access tokens, and `/api/auth/token/refresh/` rotates access
 - Password reset request endpoint enforces rate limiting (returns `429`)
 - Password reset request endpoint creates a token record and calls the email sender (mocked)
+- Token obtain endpoint rejects invalid credentials (returns 401)
+- Token refresh endpoint rejects invalid refresh tokens
+- Password reset validation endpoint rejects invalid tokens
+- Password reset confirm endpoint rejects invalid tokens
+
+- Password change endpoint rejects non-superusers and logs admin activity (superuser only)
+- Send reset link endpoint rejects non-superusers and handles missing user/email
+- Toggle active endpoint rejects non-superusers and prevents self-restriction
 - Password reset validation endpoint (`/api/auth/password-reset/validate/`) verifies tokens
 - Password reset confirm endpoint (`/api/auth/password-reset/confirm/`) changes the user password
 - Profile picture update endpoint (`/api/auth/profile/picture/`) updates the user's profile

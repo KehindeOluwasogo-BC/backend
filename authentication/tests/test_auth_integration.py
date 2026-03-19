@@ -345,3 +345,155 @@ def test_toggle_user_active_and_prevent_self_restriction():
         "/api/auth/users/toggle-active/", {"user_id": admin.id}, format="json"
     )
     assert response.status_code == 400
+
+
+def test_token_obtain_invalid_credentials_returns_401():
+    user = User.objects.create_user(
+        username="token_user2",
+        email="token_user2@example.com",
+        password="StrongPass123!",
+    )
+
+    client = APIClient()
+    response = client.post(
+        "/api/auth/token/",
+        {"username": user.username, "password": "WrongPassword"},
+        format="json",
+    )
+
+    assert response.status_code == 401
+    assert "access" not in response.data
+    assert "refresh" not in response.data
+
+
+def test_token_refresh_with_invalid_token_returns_401():
+    client = APIClient()
+    response = client.post(
+        "/api/auth/token/refresh/",
+        {"refresh": "invalid-token"},
+        format="json",
+    )
+
+    assert response.status_code == 401
+
+
+def test_validate_reset_token_with_invalid_token_returns_400():
+    client = APIClient()
+    response = client.post(
+        "/api/auth/password-reset/validate/",
+        {"token": "invalid-token"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.data.get("valid") is False
+
+
+def test_confirm_reset_with_invalid_token_returns_400():
+    client = APIClient()
+    response = client.post(
+        "/api/auth/password-reset/confirm/",
+        {"token": "invalid-token", "new_password": "AnotherPass123!"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+
+
+def test_change_password_endpoint_rejects_non_superuser():
+    user = User.objects.create_user(
+        username="normal_user",
+        email="normal_user@example.com",
+        password="StrongPass123!",
+    )
+    target = User.objects.create_user(
+        username="target_user",
+        email="target_user@example.com",
+        password="StrongPass123!",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/auth/users/change-password/",
+        {"user_id": target.id, "new_password": "NewPass123!"},
+        format="json",
+    )
+
+    assert response.status_code == 403
+
+
+def test_send_reset_link_rejects_non_superuser():
+    user = User.objects.create_user(
+        username="normal_user2",
+        email="normal_user2@example.com",
+        password="StrongPass123!",
+    )
+    target = User.objects.create_user(
+        username="target_user2",
+        email="target_user2@example.com",
+        password="StrongPass123!",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/auth/users/send-reset-link/",
+        {"user_id": target.id},
+        format="json",
+    )
+
+    assert response.status_code == 403
+
+
+def test_send_reset_link_requires_user_id_and_email():
+    admin = User.objects.create_superuser(
+        username="send_link_admin",
+        email="send_link_admin@example.com",
+        password="StrongPass123!",
+    )
+    user_no_email = User.objects.create_user(
+        username="no_email_user",
+        email="",
+        password="StrongPass123!",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=admin)
+
+    # missing user_id
+    response = client.post(
+        "/api/auth/users/send-reset-link/", {}, format="json"
+    )
+    assert response.status_code == 400
+
+    # user exists but has no email
+    response = client.post(
+        "/api/auth/users/send-reset-link/",
+        {"user_id": user_no_email.id},
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+def test_toggle_user_active_rejects_non_superuser():
+    user = User.objects.create_user(
+        username="normal_user3",
+        email="normal_user3@example.com",
+        password="StrongPass123!",
+    )
+    target = User.objects.create_user(
+        username="target_user3",
+        email="target_user3@example.com",
+        password="StrongPass123!",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/auth/users/toggle-active/", {"user_id": target.id}, format="json"
+    )
+    assert response.status_code == 403
