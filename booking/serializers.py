@@ -40,15 +40,33 @@ class BookingSerializer(serializers.ModelSerializer):
         """
         Check for booking conflicts before creating/updating
         """
-        # Create a temporary booking instance to check availability
-        booking = Booking(**data)
-        
-        # If updating, set the pk
+        # If updating, use instance values for fields not being changed
         if self.instance:
+            # Check if only status is being updated (skip time validation in this case)
+            only_status_update = len(data) == 1 and 'status' in data
+            
+            if only_status_update:
+                # Skip validation for status-only updates
+                return data
+            
+            # Merge with existing instance data
+            booking_data = {
+                'user': self.instance.user,
+                'full_name': data.get('full_name', self.instance.full_name),
+                'email': data.get('email', self.instance.email),
+                'service': data.get('service', self.instance.service),
+                'booking_date': data.get('booking_date', self.instance.booking_date),
+                'booking_time': data.get('booking_time', self.instance.booking_time),
+                'notes': data.get('notes', self.instance.notes),
+                'status': data.get('status', self.instance.status),
+            }
+            booking = Booking(**booking_data)
             booking.pk = self.instance.pk
-            booking.user = self.instance.user
+        else:
+            # Creating new booking
+            booking = Booking(**data)
         
-        # Check if the slot is available
+        # Check if the slot is available (only validate time-related fields if they changed)
         try:
             booking.clean()
         except DjangoValidationError as e:
@@ -66,11 +84,12 @@ class BookingSerializer(serializers.ModelSerializer):
         if request and not request.user.is_superuser:
             # Remove status from validated_data if user is not a superuser
             validated_data.pop('status', None)
-            # If the booking was previously confirmed/completed/cancelled, reset to pending
-            if instance.status != 'pending':
-                instance.status = 'pending'
+        
+        # Update all provided fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         
         # Store the old status in the instance for email notification
         instance._old_status = old_status
         
-        return super().update(instance, validated_data)
+        return instance
