@@ -21,7 +21,7 @@ def send_password_reset_email(user_email, reset_token):
         bool: True if email sent successfully, False otherwise
     """
     # Build the reset URL
-    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={reset_token}"
+    reset_url = f"{settings.FRONTEND_URL}/#/reset-password?token={reset_token}"
     
     # Create email content
     html_content = f"""
