@@ -61,20 +61,22 @@ class BookingView(viewsets.ModelViewSet):
         """
         Update booking and send notification email if status changed
         """
-        old_status = serializer.instance.status if serializer.instance else None
-        booking = serializer.save()
-        
-        # Send update email if there were changes
         try:
-            if old_status == 'cancelled' or booking.status == 'cancelled':
-                # Send cancellation email if status changed to cancelled
-                if booking.status == 'cancelled' and old_status != 'cancelled':
-                    send_booking_cancellation(booking)
-            else:
-                # Send update email for other changes
-                send_booking_update(booking, old_status=old_status)
+            old_status = serializer.instance.status if serializer.instance else None
+            booking = serializer.save()
+            
+            # Send update email if status changed
+            if old_status and old_status != booking.status:
+                try:
+                    if booking.status == 'cancelled':
+                        send_booking_cancellation(booking)
+                    else:
+                        send_booking_update(booking, old_status=old_status)
+                except Exception as e:
+                    logger.error(f"Failed to send booking update email for booking {booking.id}: {str(e)}")
         except Exception as e:
-            logger.error(f"Failed to send booking update email for booking {booking.id}: {str(e)}")
+            logger.error(f"Failed to update booking {serializer.instance.id}: {str(e)}")
+            raise
     
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def services(self, request):
