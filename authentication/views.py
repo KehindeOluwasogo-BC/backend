@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from rest_framework.views import APIView
 
@@ -11,10 +12,16 @@ from .serializers import (
     UserSerializer, 
     PasswordResetRequestSerializer, 
     PasswordResetConfirmSerializer,
-    UpdateProfilePictureSerializer
+    UpdateProfilePictureSerializer,
+    CustomTokenObtainPairSerializer
 )
 from .models import PasswordResetToken, PasswordResetAttempt, UserProfile, AccountHistory
 from .utils import generate_reset_token, send_password_reset_email
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """Custom token view with case-insensitive username lookup"""
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class AuthRootView(APIView):
@@ -76,7 +83,7 @@ class RequestPasswordResetView(APIView):
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
+            email = serializer.validated_data['email'].lower()
             
             # Check rate limiting
             is_limited, seconds_remaining = PasswordResetAttempt.is_rate_limited(email)
@@ -96,7 +103,7 @@ class RequestPasswordResetView(APIView):
             # Clean up old attempts (optional optimization)
             PasswordResetAttempt.cleanup_old_attempts()
             
-            user = User.objects.get(email=email)
+            user = User.objects.get(email__iexact=email)
             
             # Generate token
             token = generate_reset_token()
