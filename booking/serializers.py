@@ -92,4 +92,7 @@ class BookingSerializer(serializers.ModelSerializer):
         # Store the old status in the instance for email notification
         instance._old_status = old_status
         
+        # Save the instance to persist changes to database
+        instance.save()
+        
         return instance
