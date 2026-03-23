@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import UserProfile, AdminActivityLog
 
 
@@ -67,6 +68,24 @@ class UserSerializer(serializers.ModelSerializer):
         return ""
 
 
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Custom token serializer with case-insensitive username lookup"""
+    
+    def validate(self, attrs):
+        # Convert username to lowercase for case-insensitive lookup
+        username = attrs.get('username', '').lower()
+        attrs['username'] = username
+        
+        # Try to find user with case-insensitive username
+        try:
+            user = User.objects.get(username__iexact=username)
+            attrs['username'] = user.username  # Use the actual username from DB
+        except User.DoesNotExist:
+            pass  # Let the parent validator handle the error
+        
+        return super().validate(attrs)
+
+
 class UpdateProfilePictureSerializer(serializers.Serializer):
     profile_picture = serializers.URLField(max_length=500)
 
@@ -75,8 +94,9 @@ class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
     
     def validate_email(self, value):
-        """Check if user with this email exists"""
-        if not User.objects.filter(email=value).exists():
+        """Check if user with this email exists (case-insensitive)"""
+        value = value.lower()
+        if not User.objects.filter(email__iexact=value).exists():
             raise serializers.ValidationError("No user found with this email address.")
         return value
 
