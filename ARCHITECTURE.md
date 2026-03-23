@@ -117,15 +117,47 @@ ESE Booking System architecture overview and design decisions.
 #### Booking App
 **Location:** `booking/`
 
-**Endpoints:**
+**Core Endpoints:**
 - Booking CRUD operations (Create, Read, Update, Delete)
 - Role-aware filtering (users see own bookings, admins see all)
 
+**Availability & Service Endpoints:**
+- `GET /bookings/services/` - List all available services with duration & buffer info
+- `GET /bookings/available_slots/` - Check available time slots for a date/service
+- `POST /bookings/check_availability/` - Verify if specific slot is available
+
 **Key Components:**
-- `views.py`: BookingViewSet using DRF's ModelViewSet
-- `serializers.py`: Booking serialization with permission checks
-- `models.py`: Booking model with status lifecycle
-- `urls.py`: Automatic routing via SimpleRouter
+- `views.py`: BookingViewSet with custom actions for services & availability
+- `serializers.py`: Booking serialization with advanced validation (conflicts, business hours)
+- `models.py`: Booking model with service duration, buffer handling, and availability checking
+- `services.py`: Service catalog with durations, buffers, and helper functions
+- `email_utils.py`: Email notifications (confirmation, updates, cancellations)
+- `urls.py`: Automatic routing via DRF SimpleRouter
+
+**Service Catalog:**
+The system includes 8 predefined services with specific scheduling properties:
+- Haircut (60 min): 15-min buffers (90 min total)
+- Hair Coloring (120 min): 15-min before, 30-min after (165 min total)
+- Massage (90 min): 10-min before, 20-min after (120 min total)
+- Facial (75 min): 15-min buffers (105 min total)
+- Manicure (45 min): 10-min buffers (65 min total)
+- Pedicure (60 min): 10-min before, 15-min after (85 min total)
+- Spa Package (180 min): 20-min before, 30-min after (230 min total)
+- Consultation (30 min): 5-min before, 10-min after (45 min total)
+
+**Availability Algorithm:**
+1. Check service exists in catalog
+2. Validate booking doesn't fall on past date
+3. Verify booking fits within business hours (9 AM - 7:30 PM)
+4. Compare against existing bookings using service duration + buffer times
+5. Account for buffer periods before and after each service
+6. Prevent overlapping bookings with proper time windowing
+
+**Email Notifications:**
+- **Confirmation**: Sent immediately after booking creation
+- **Update**: Triggered when booking status changes (pending → confirmed/cancelled/completed)
+- **Cancellation**: Specific email when booking is cancelled
+- Powered by SendGrid API with formatted HTML templates
 
 ---
 
@@ -195,11 +227,14 @@ User (Django built-in)
 │   ├── ip_address (GenericIPAddressField)
 │   └── timestamp (DateTimeField)
 └── Booking
+    ├── user (ForeignKey to User)
+    ├── full_name (CharField)
+    ├── email (EmailField)
     ├── booking_date (DateField)
     ├── booking_time (TimeField)
-    ├── service_type (CharField)
+    ├── service (CharField - must be in SERVICE_CATALOG)
     ├── status (CharField: pending, confirmed, completed, cancelled)
-    ├── notes (TextField)
+    ├── notes (TextField, optional)
     └── timestamps (created_at, updated_at)
 ```
 

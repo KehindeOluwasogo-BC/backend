@@ -550,6 +550,209 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 
 ## Booking Endpoints
 
+### Get Available Services
+**GET** `/bookings/services/`
+
+Retrieve list of all available services with their details.
+
+**Headers:**
+```
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+**Response (200 OK):**
+```json
+{
+  "services": [
+    {
+      "name": "Haircut",
+      "duration": 60,
+      "description": "Basic haircut service",
+      "buffer_before": 15,
+      "buffer_after": 15,
+      "total_time": 90
+    },
+    {
+      "name": "Hair Coloring",
+      "duration": 120,
+      "description": "Full hair coloring service",
+      "buffer_before": 15,
+      "buffer_after": 30,
+      "total_time": 165
+    },
+    {
+      "name": "Massage",
+      "duration": 90,
+      "description": "Relaxation massage therapy",
+      "buffer_before": 10,
+      "buffer_after": 20,
+      "total_time": 120
+    },
+    {
+      "name": "Facial",
+      "duration": 75,
+      "description": "Facial treatment",
+      "buffer_before": 15,
+      "buffer_after": 15,
+      "total_time": 105
+    },
+    {
+      "name": "Manicure",
+      "duration": 45,
+      "description": "Manicure service",
+      "buffer_before": 10,
+      "buffer_after": 10,
+      "total_time": 65
+    },
+    {
+      "name": "Pedicure",
+      "duration": 60,
+      "description": "Pedicure service",
+      "buffer_before": 10,
+      "buffer_after": 15,
+      "total_time": 85
+    },
+    {
+      "name": "Spa Package",
+      "duration": 180,
+      "description": "Full spa experience",
+      "buffer_before": 20,
+      "buffer_after": 30,
+      "total_time": 230
+    },
+    {
+      "name": "Consultation",
+      "duration": 30,
+      "description": "Initial consultation",
+      "buffer_before": 5,
+      "buffer_after": 10,
+      "total_time": 45
+    }
+  ]
+}
+```
+
+---
+
+### Get Available Time Slots
+**GET** `/bookings/available_slots/?date=2026-04-15&service=Haircut`
+
+Get all available time slots for a specific date and service.
+
+**Headers:**
+```
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+**Query Parameters:**
+- `date` (required): Date in YYYY-MM-DD format
+- `service` (optional): Service name (if not provided, shows general availability with 60-min slots)
+
+**Response (200 OK):**
+```json
+{
+  "date": "2026-04-15",
+  "business_hours": {
+    "start": "09:00",
+    "end": "19:30"
+  },
+  "service": "Haircut",
+  "service_duration": 60,
+  "slots": [
+    {
+      "time": "09:00",
+      "display_time": "09:00 AM",
+      "available": true
+    },
+    {
+      "time": "09:30",
+      "display_time": "09:30 AM",
+      "available": true
+    },
+    {
+      "time": "10:00",
+      "display_time": "10:00 AM",
+      "available": false
+    }
+  ],
+  "summary": {
+    "total_slots": 21,
+    "available_slots": 18,
+    "booked_slots": 3
+  }
+}
+```
+
+**Errors:**
+```json
+{
+  "error": "Date parameter is required"
+}
+```
+
+```json
+{
+  "error": "Invalid date format. Use YYYY-MM-DD"
+}
+```
+
+```json
+{
+  "error": "Cannot check availability for past dates"
+}
+```
+
+---
+
+### Check Specific Slot Availability
+**POST** `/bookings/check_availability/`
+
+Check if a specific time slot is available for a service.
+
+**Headers:**
+```
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
+```
+
+**Request Body:**
+```json
+{
+  "date": "2026-04-15",
+  "time": "10:00",
+  "service": "Haircut"
+}
+```
+
+**Response (200 OK - Available):**
+```json
+{
+  "available": true,
+  "service": "Haircut",
+  "start_time": "2026-04-15T10:00:00",
+  "end_time": "2026-04-15T11:00:00",
+  "duration_minutes": 60
+}
+```
+
+**Response (200 OK - Not Available):**
+```json
+{
+  "available": false,
+  "service": "Haircut",
+  "start_time": "2026-04-15T10:00:00",
+  "error": "This time slot is not available for Haircut. Please choose a different time."
+}
+```
+
+**Errors:**
+```json
+{
+  "error": "date, time, and service are required"
+}
+```
+
+---
+
 ### List Bookings
 **GET** `/bookings/`
 
@@ -575,9 +778,14 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
     {
       "id": 1,
       "user": 5,
+      "username": "john_doe",
+      "full_name": "John Doe",
+      "email": "john@example.com",
       "booking_date": "2026-04-15",
-      "booking_time": "10:00:00",
-      "service_type": "Haircut",
+      "booking_time": "10:00",
+      "service": "Haircut",
+      "service_duration": 60,
+      "estimated_end_time": "11:00",
       "status": "pending",
       "notes": "Regular cut with fade",
       "created_at": "2026-03-23T12:00:00Z",
@@ -602,9 +810,11 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 **Request Body (Regular User):**
 ```json
 {
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-15",
-  "booking_time": "10:00:00",
-  "service_type": "Haircut",
+  "booking_time": "10:00",
+  "service": "Haircut",
   "notes": "Regular cut with fade"
 }
 ```
@@ -613,9 +823,11 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```json
 {
   "user_id": 5,
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-15",
-  "booking_time": "10:00:00",
-  "service_type": "Haircut",
+  "booking_time": "10:00",
+  "service": "Haircut",
   "status": "confirmed",
   "notes": "Regular cut with fade"
 }
@@ -626,13 +838,43 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 {
   "id": 1,
   "user": 5,
+  "username": "john_doe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-15",
-  "booking_time": "10:00:00",
-  "service_type": "Haircut",
+  "booking_time": "10:00",
+  "service": "Haircut",
+  "service_duration": 60,
+  "estimated_end_time": "11:00",
   "status": "pending",
   "notes": "Regular cut with fade",
   "created_at": "2026-03-23T12:00:00Z",
   "updated_at": "2026-03-23T12:00:00Z"
+}
+```
+
+**Errors:**
+```json
+{
+  "service": ["'InvalidService' is not a valid service. Valid services are: Haircut, Hair Coloring, Massage, ..."]
+}
+```
+
+```json
+{
+  "booking_date": ["Cannot create bookings for past dates."]
+}
+```
+
+```json
+{
+  "booking_time": ["Booking starts before business hours. Earliest time for Haircut is 9:15 AM."]
+}
+```
+
+```json
+{
+  "booking_time": ["This time slot is not available for Haircut. Please choose a different time."]
 }
 ```
 
@@ -653,9 +895,14 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 {
   "id": 1,
   "user": 5,
+  "username": "john_doe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-15",
-  "booking_time": "10:00:00",
-  "service_type": "Haircut",
+  "booking_time": "10:00",
+  "service": "Haircut",
+  "service_duration": 60,
+  "estimated_end_time": "11:00",
   "status": "pending",
   "notes": "Regular cut with fade",
   "created_at": "2026-03-23T12:00:00Z",
@@ -678,10 +925,25 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 **Request Body (Regular User):**
 ```json
 {
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-16",
-  "booking_time": "14:00:00",
-  "service_type": "Shave",
-  "notes": "Professional shave"
+  "booking_time": "14:00",
+  "service": "Hair Coloring",
+  "notes": "Full color treatment"
+}
+```
+
+**Request Body (Admin - update status):**
+```json
+{
+  "full_name": "John Doe",
+  "email": "john@example.com",
+  "booking_date": "2026-04-15",
+  "booking_time": "10:00",
+  "service": "Haircut",
+  "status": "confirmed",
+  "notes": "Regular cut with fade"
 }
 ```
 
@@ -690,11 +952,16 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 {
   "id": 1,
   "user": 5,
+  "username": "john_doe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-16",
-  "booking_time": "14:00:00",
-  "service_type": "Shave",
+  "booking_time": "14:00",
+  "service": "Hair Coloring",
+  "service_duration": 120,
+  "estimated_end_time": "16:00",
   "status": "pending",
-  "notes": "Professional shave",
+  "notes": "Full color treatment",
   "created_at": "2026-03-23T12:00:00Z",
   "updated_at": "2026-03-23T13:00:00Z"
 }
@@ -714,7 +981,7 @@ Update specific fields of a booking.
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 ```
 
-**Request Body (Admin - update status):**
+**Request Body (Admin - update status only):**
 ```json
 {
   "status": "confirmed"
@@ -726,15 +993,22 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGc...
 {
   "id": 1,
   "user": 5,
+  "username": "john_doe",
+  "full_name": "John Doe",
+  "email": "john@example.com",
   "booking_date": "2026-04-15",
-  "booking_time": "10:00:00",
-  "service_type": "Haircut",
+  "booking_time": "10:00",
+  "service": "Haircut",
+  "service_duration": 60,
+  "estimated_end_time": "11:00",
   "status": "confirmed",
   "notes": "Regular cut with fade",
   "created_at": "2026-03-23T12:00:00Z",
   "updated_at": "2026-03-23T13:05:00Z"
 }
 ```
+
+**Note:** Status-only updates skip availability validation.
 
 ---
 

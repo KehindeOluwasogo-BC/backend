@@ -263,45 +263,117 @@ Columns:
   └─ User who made the booking
   └─ Regular users can only see/modify their own
   └─ Admins can see/modify all
+- full_name (VARCHAR, max_length=120)
+  └─ Customer full name
+- email (EmailField)
+  └─ Customer email address
+  └─ Used for booking confirmation notifications
 - booking_date (DATE)
   └─ Date of the booking (YYYY-MM-DD)
-  └─ Can be past, present, or future
+  └─ Cannot be in the past
   └─ SQL type: DATE
 - booking_time (TIME)
-  └─ Time of the booking (HH:MM:SS)
+  └─ Start time of the booking (HH:MM:SS)
+  └─ Must be within business hours (9:00 AM - 7:30 PM)
   └─ SQL type: TIME
-- service_type (VARCHAR, max_length=100)
-  └─ Type of service (e.g., "Haircut", "Shave", "Massage")
-  └─ Free-form text, not enumerated
+- service (VARCHAR, max_length=120)
+  └─ Type of service from catalog
+  └─ Valid services: Haircut, Hair Coloring, Massage, Facial, Manicure, Pedicure, Spa Package, Consultation
+  └─ Each service has defined duration and buffers
 - status (VARCHAR, max_length=20)
   └─ Choices: pending, confirmed, completed, cancelled
   └─ Regular users: resets to "pending" on update
   └─ Admins: can set any status
+  └─ Default: "pending"
 - notes (TextField, nullable)
-  └─ Additional details or comments
+  └─ Additional details or comments about the booking
 - created_at (DATETIME, auto_now_add)
   └─ When booking was created
 - updated_at (DATETIME, auto_now)
   └─ Last modification timestamp
 
 Indexes:
-- user_id (for filtering by user)
-- status (for finding pending/confirmed bookings)
-- booking_date (for date-range queries)
-- created_at (for sorting)
+- (booking_date, booking_time) - Composite index for availability checks
+- status - Finding pending/confirmed bookings
+- user_id - Filtering by user
 
 Constraints:
 - CASCADE delete with User
-- status field limited to choices
+- status field limited to predefined choices
+- Service must be valid (from SERVICE_CATALOG)
+- booking_date cannot be in the past
+- Booking end time (including service duration and buffer) must be within business hours
+
+Availability Validation:
+- Uses service duration + buffer times to determine time slot occupancy
+- Prevents overlapping bookings considering buffers
+- Respects business hours: 9:00 AM - 7:30 PM (19:30)
+- Service-specific buffers prevent back-to-back incompatible services
 
 Example Data:
-┌────┬────────┬──────────────┬──────────┬──────────┬──────────┬──────────────┐
-│ id │ user_id│ booking_date │ time     │ service  │ status   │ created_at   │
-├────┼────────┼──────────────┼──────────┼──────────┼──────────┼──────────────┤
-│ 1  │ 5      │ 2026-04-15   │ 10:00:00 │ Haircut  │ pending  │ 2026-03-23   │
-│ 2  │ 5      │ 2026-04-16   │ 14:00:00 │ Shave    │ confirmed│ 2026-03-23   │
-│ 3  │ 7      │ 2026-04-20   │ 09:30:00 │ Massage  │ completed│ 2026-03-22   │
-└────┴────────┴──────────────┴──────────┴──────────┴──────────┴──────────────┘
+┌────┬────────┬───────────┬────────┬──────────┬──────────┬──────────┬──────────────┐
+│ id │ user_id│ full_name │ email  │ service  │status    │ bdate    │ btime        │
+├────┼────────┼───────────┼────────┼──────────┼──────────┼──────────┼──────────────┤
+│ 1  │ 5      │ John Doe  │ j@ex.co│ Haircut  │ pending  │2026-04-15│ 10:00:00     │
+│ 2  │ 5      │ John Doe  │ j@ex.co│ Coloring │ confirmed│2026-04-16│ 14:00:00     │
+│ 3  │ 7      │ Jane Smith│ j@ex.co│ Massage  │ completed│2026-04-20│ 09:30:00     │
+└────┴────────┴───────────┴────────┴──────────┴──────────┴──────────┴──────────────┘
+```
+
+### Service Catalog
+
+The booking system includes a predefined catalog of services, each with specific durations and buffer times for scheduling:
+
+```
+Service Catalog (from booking/services.py):
+
+1. Haircut
+   - Duration: 60 minutes
+   - Buffer before: 15 minutes
+   - Buffer after: 15 minutes
+   - Total time needed: 90 minutes
+
+2. Hair Coloring
+   - Duration: 120 minutes
+   - Buffer before: 15 minutes
+   - Buffer after: 30 minutes
+   - Total time needed: 165 minutes
+
+3. Massage
+   - Duration: 90 minutes
+   - Buffer before: 10 minutes
+   - Buffer after: 20 minutes
+   - Total time needed: 120 minutes
+
+4. Facial
+   - Duration: 75 minutes
+   - Buffer before: 15 minutes
+   - Buffer after: 15 minutes
+   - Total time needed: 105 minutes
+
+5. Manicure
+   - Duration: 45 minutes
+   - Buffer before: 10 minutes
+   - Buffer after: 10 minutes
+   - Total time needed: 65 minutes
+
+6. Pedicure
+   - Duration: 60 minutes
+   - Buffer before: 10 minutes
+   - Buffer after: 15 minutes
+   - Total time needed: 85 minutes
+
+7. Spa Package
+   - Duration: 180 minutes
+   - Buffer before: 20 minutes
+   - Buffer after: 30 minutes
+   - Total time needed: 230 minutes
+
+8. Consultation
+   - Duration: 30 minutes
+   - Buffer before: 5 minutes
+   - Buffer after: 10 minutes
+   - Total time needed: 45 minutes
 ```
 
 ---
