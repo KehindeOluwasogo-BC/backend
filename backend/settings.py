@@ -15,7 +15,7 @@ SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
 FROM_EMAIL = os.getenv('FROM_EMAIL') or os.getenv('SENDGRID_FROM_EMAIL')
 
 # Frontend URL for password reset links
-FRONTEND_URL = os.getenv('CORS_ALLOWED_ORIGINS')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 
 def get_list_env(var_name, default_values):
@@ -39,7 +39,7 @@ ALLOWED_HOSTS = get_list_env(
     "ALLOWED_HOSTS",
     ["localhost", "127.0.0.1", "0.0.0.0", ".app.github.dev"],
 )
-hostname = os.environ.get("CORS_ALLOWED_ORIGINS")
+hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if hostname:
     ALLOWED_HOSTS.append(hostname)
 
