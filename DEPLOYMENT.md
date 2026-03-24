@@ -233,8 +233,9 @@ curl -X POST $BASE_URL/auth/token/ \
 ```
 
 ### Step 8: Create Admin User
+For free tier users, use the Build command above.
 
-Connect to production database and create superuser:
+For Paid tier users, Connect to production database and create superuser:
 
 **Via Render Shell:**
 1. Go to Web Service → **Shell** tab
