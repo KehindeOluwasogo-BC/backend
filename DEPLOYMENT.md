@@ -128,7 +128,7 @@ In Render dashboard:
 
 1. Click **"New+"** → **"PostgreSQL"**
 2. Configure:
-   - **Name**: `ese-booking-db`
+   - **Name**: `ese-booking-db` (or preferred name)
    - **Database**: `ese_booking`
    - **User**: (auto-generated)
    - **Region**: Same as web service (optimal)
