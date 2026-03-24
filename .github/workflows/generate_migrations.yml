@@ -6,6 +6,7 @@ on:
       - '*/models.py'
       - 'backend/settings.py'
     branches: [ main, develop ]
+  workflow_dispatch:
 
 jobs:
   migrations:
