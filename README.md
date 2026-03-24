@@ -14,11 +14,11 @@ Enterprise-grade backend service for booking management, authentication, and adm
 
 This repository contains the secure, scalable API layer for the ESE booking system with:
 
-✅ **Enterprise Authentication** - JWT tokens, password reset with rate limiting, role-based access control
-✅ **User Management** - Registration, profiles, admin capabilities with audit logging
-✅ **Booking System** - Full CRUD operations with permission-based filtering
-✅ **Activity Logging** - Comprehensive audit trail for compliance and security
-✅ **Production Ready** - Deployed on Render with PostgreSQL, comprehensive testing (30 tests)
+- ✅ **Enterprise Authentication** - JWT tokens, password reset with rate limiting, role-based access control
+- ✅ **User Management** - Registration, profiles, admin capabilities with audit logging
+- ✅ **Booking System** - Full CRUD operations with permission-based filtering
+- ✅ **Activity Logging** - Comprehensive audit trail for compliance and security
+- ✅ **Production Ready** - Deployed on Render with PostgreSQL, comprehensive testing (30 tests)
 
 ## Tech Stack
 
