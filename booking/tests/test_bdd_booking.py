@@ -26,7 +26,7 @@ def booking_context():
         full_name="Owner User",
         email="owner@example.com",
         service="Haircut",
-        booking_date=date(2026, 3, 11),
+        booking_date=date(2026, 4, 11),
         booking_time=time(10, 30),
         notes="own",
     )
@@ -35,7 +35,7 @@ def booking_context():
         full_name="Other User",
         email="other@example.com",
         service="Massage",
-        booking_date=date(2026, 3, 12),
+        booking_date=date(2026, 4, 12),
         booking_time=time(11, 0),
         notes="other",
     )
