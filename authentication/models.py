@@ -130,10 +130,14 @@ class AccountHistory(models.Model):
         ('REVOKED', 'Admin Privileges Revoked'),
         ('DELETED', 'Account Deleted'),
         ('REACTIVATED', 'Account Reactivated'),
+        ('RESTRICTED', 'Account Restricted'),
+        ('UNRESTRICTED', 'Account Unrestricted'),
+        ('PASSWORD_RESET_INITIATED', 'Password Reset Initiated'),
+        ('PASSWORD_RESET_COMPLETED', 'Password Reset Completed'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='account_history')
-    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    event_type = models.CharField(max_length=30, choices=EVENT_CHOICES)
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='performed_account_actions')
     description = models.TextField(blank=True)
     event_timestamp = models.DateTimeField(auto_now_add=True)
