@@ -59,10 +59,16 @@ class BookingView(viewsets.ModelViewSet):
     
     def perform_update(self, serializer):
         """
-        Update booking and send notification email if status changed
+        Update booking and send notification email if status changed.
+        Editing a booking changes its status from confirmed to pending.
         """
         try:
             old_status = serializer.instance.status if serializer.instance else None
+            
+            # Change status to pending when editing (unless explicitly setting to cancelled)
+            if serializer.instance.status == 'confirmed' and 'status' not in self.request.data:
+                serializer.instance.status = 'pending'
+            
             booking = serializer.save()
             
             # Send update email if status changed
