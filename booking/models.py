@@ -116,7 +116,9 @@ class Booking(models.Model):
             })
         
         # Check availability for new bookings or when date/time/service changes
-        if not self.pk or self._state.adding:
+        # Check if booking exists in database (not just if pk is set, since fresh objects from serializers will have _state.adding=True)
+        is_new_booking = not Booking.objects.filter(pk=self.pk).exists() if self.pk else True
+        if is_new_booking:
             # New booking
             if not self.check_availability(exclude_self=False):
                 raise ValidationError({
