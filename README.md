@@ -264,7 +264,9 @@ The application is deployed on [Render](https://render.com) with PostgreSQL. You
 
 You can test my application at:
 
-**Production URL:** `https://new-frontend-rew2.onrender.com/`
+**Production URL:** 
+**[Frontend](https://new-frontend-rew2.onrender.com/)**
+**[Backend](https://backend-b2tz.onrender.com/)**
 
 **Quick Deploy Steps:**
 1. Push to `main` branch
@@ -475,7 +477,7 @@ This project benefited from **GitHub Copilot** and **ChatGPT** as development as
 ## 👨‍💻 Author
 
 **Kehinde Oluwasogo**
-- GitHub: https://github.com/Kehinde-Oluwasogo
+- GitHub: https://github.com/KehindeOluwasogo-BC
 
 ---
 
